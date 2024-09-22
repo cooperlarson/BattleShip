@@ -1,7 +1,7 @@
 # Statement of Work (SOW) for Socket Programming Project
 
 ## Project Title:
-**BattleShip**
+### BattleShip
 
 ## Team:
 * Cooper Larson
