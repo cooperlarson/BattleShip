@@ -1,6 +1,8 @@
 # BattleShip
 Python implementation of BattleShip for 2 players using sockets.
 
+<img src="https://t3.ftcdn.net/jpg/05/92/31/70/360_F_592317043_rOOpTliZqnmqLi3YwWxGIgVyyfk5nMaM.jpg" width=100% />
+
 ## How to play:
 
 ### Start the server:
