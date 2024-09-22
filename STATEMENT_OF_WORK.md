@@ -57,7 +57,7 @@ The goal of this project is to enhance my working knowledge of sockets and build
   * Supports all major operating systems that support Python
 
 ## Assumptions:
-* There is a routable link via some network trace which supports TCP protocol between the 2 devices and the server.
+* There is a network link between each device the game server host.
 * There are no firewall rules in place preventing TCP communication from completing on the configured port(s).
 
 ## Roles and Responsibilities
