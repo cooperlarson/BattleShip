@@ -1,8 +1,8 @@
 import unittest
 import threading
 import time
-from src.server import BattleshipServer
-from src.client import BattleshipClient
+from server import BattleshipServer
+from client import BattleshipClient
 
 
 class TestBattleshipCommunication(unittest.TestCase):
