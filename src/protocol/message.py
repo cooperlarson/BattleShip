@@ -14,6 +14,9 @@ class Message:
         self.json_header = None
         self.request = None
 
+    def enqueue_message(self, message):
+        self._send_buffer += message
+
     def _set_selector_events_mask(self, mode):
         events = selectors.EVENT_READ if mode == "r" else selectors.EVENT_WRITE
         self.selector.modify(self.sock, events, data=self)
@@ -46,7 +49,7 @@ class Message:
     def _json_decode(json_bytes):
         return json.loads(json_bytes.decode('utf-8'))
 
-    def _create_message(self, content):
+    def create_message(self, content):
         content_bytes = self._json_encode(content)
         header = { "content-length": len(content_bytes) }
         header_bytes = self._json_encode(header)
@@ -71,7 +74,7 @@ class Message:
     def write(self):
         if self.request and not self._send_buffer:
             response = { "result": "ok" }
-            message = self._create_message(response)
+            message = self.create_message(response)
             self._send_buffer += message
         self._write()
 

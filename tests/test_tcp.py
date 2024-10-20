@@ -1,4 +1,3 @@
-# tests/test_tcp.py
 import logging
 import unittest
 import threading
@@ -9,6 +8,10 @@ from src.util.logger import Logger
 
 
 class TestTCP(unittest.TestCase):
+    def __init__(self, name: str = "test_tcp"):
+        super().__init__(name)
+        self._outcome = None
+
     @classmethod
     def setUpClass(cls):
         cls.logger = Logger()
@@ -26,7 +29,7 @@ class TestTCP(unittest.TestCase):
     def tearDown(self):
         self.server_running = False
         time.sleep(0.3)
-        if self._outcome.errors:
+        if self._outcome.result.errors:
             print(self.logger.get_logs())
         self.logger.clear()
 

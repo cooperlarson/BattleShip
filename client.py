@@ -38,7 +38,11 @@ class BattleshipClient:
     def handle_response(self):
         if self.msg.request:
             message_type = self.msg.request.get("type")
-            if message_type == "ack":
+            if message_type == "welcome":
+                print(self.msg.request.get("message"))
+                player_name = input("Enter your player name: ")
+                self.msg.enqueue_message(self.msg.create_join_message(player_name))
+            elif message_type == "ack":
                 result = self.msg.request.get("result")
                 if result == "joined":
                     print(f"Successfully joined as {self.msg.request.get('player_name')}")

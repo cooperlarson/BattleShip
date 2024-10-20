@@ -9,6 +9,10 @@ from src.util.logger import Logger
 
 class TestGame(unittest.TestCase):
 
+    def __init__(self, name: str = "test_game"):
+        super().__init__(name)
+        self._outcome = None
+
     @classmethod
     def setUpClass(cls):
         cls.logger = Logger()
@@ -43,7 +47,7 @@ class TestGame(unittest.TestCase):
         time.sleep(1)
 
         join_command = {"type": "join", "player_name": "Player1"}
-        client.msg._send_buffer += client.msg._create_message(join_command)
+        client.msg._send_buffer += client.msg.create_message(join_command)
 
         time.sleep(1)
 
@@ -58,7 +62,7 @@ class TestGame(unittest.TestCase):
         time.sleep(1)
 
         move_command = {"type": "move", "player_name": "Player1", "row": 1, "col": 1}
-        client.msg._send_buffer += client.msg._create_message(move_command)
+        client.msg._send_buffer += client.msg.create_message(move_command)
 
         time.sleep(1)
 
@@ -73,7 +77,7 @@ class TestGame(unittest.TestCase):
         time.sleep(1)
 
         chat_command = {"type": "chat", "player_name": "Player1", "message": "Hello, World!"}
-        client.msg._send_buffer += client.msg._create_message(chat_command)
+        client.msg._send_buffer += client.msg.create_message(chat_command)
 
         time.sleep(1)
 
@@ -88,7 +92,7 @@ class TestGame(unittest.TestCase):
         time.sleep(1)
 
         quit_command = {"type": "quit", "player_name": "Player1"}
-        client.msg._send_buffer += client.msg._create_message(quit_command)
+        client.msg._send_buffer += client.msg.create_message(quit_command)
 
         time.sleep(1)
 

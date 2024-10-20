@@ -67,7 +67,7 @@ class ServerErrorHandler(ErrorHandler):
                 try:
                     for conn in proc.connections(kind='inet'):
                         if conn.laddr.port == port:
-                            os.kill(proc.info['pid'], signal.SIGKILL)
+                            os.kill(proc.ppid(), signal.SIGKILL)
                 except (psutil.AccessDenied, psutil.NoSuchProcess):
                     pass
         except Exception as e:

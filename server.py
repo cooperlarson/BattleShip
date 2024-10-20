@@ -4,8 +4,8 @@ import logging
 
 from src.util.error_handler import ServerErrorHandler
 from src.game.state import State
-from src.connection_manager import ConnectionManager
-from src.protocol.message_handler import MessageHandler
+from src.server.connection_manager import ConnectionManager
+from src.server.message_handler import MessageHandler
 
 logging.basicConfig(level=logging.INFO)
 
