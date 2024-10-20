@@ -3,22 +3,29 @@ import traceback
 import os
 import signal
 import psutil
+import time
+import socket
+
+from src.util.logger import Logger
 
 
 class ErrorHandler:
     def __init__(self, logger=None):
-        self.logger = logger or (lambda msg: print(msg))
+        self.logger = logger or Logger()
+        self.dump_logs = False
 
     def log_error(self, error, context):
         error_msg = f"Error in {context}: {repr(error)}"
-        self.logger(error_msg)
+        self.logger.error(error_msg)
         traceback.print_exc()
 
     def __call__(self, func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             try:
-                return func(*args, **kwargs)
+                result = func(*args, **kwargs)
+                self.logger.clear()  # Clear logs if successful
+                return result
             except Exception as e:
                 self.handle_error(e, func.__name__, *args, **kwargs)
                 return self.recovery_action(func, e, *args, **kwargs)
@@ -28,7 +35,9 @@ class ErrorHandler:
         self.log_error(error, context)
 
     def recovery_action(self, func, error, *args, **kwargs):
-        pass
+        if self.dump_logs:
+            print(self.logger.get_logs())
+        return None
 
 
 class ServerErrorHandler(ErrorHandler):
@@ -39,17 +48,17 @@ class ServerErrorHandler(ErrorHandler):
         if isinstance(error, OSError) and error.errno == 48:  # Address already in use
             port = kwargs.get('port')
             if port:
-                print(f"Port {port} is already in use. Attempting to kill process on this port...")
+                self.logger.info(f"Port {port} is already in use. Attempting to kill process on this port...")
                 self._kill_process_on_port(port)
-                print("Retrying to start server...")
+                self.logger.info("Retrying to start server...")
                 if 'self' in kwargs and hasattr(kwargs['self'], 'sock'):
                     kwargs['self'].close_socket()
                 return func(*args, **kwargs)
             else:
-                print("Port number is missing, cannot perform recovery.")
+                self.logger.error("Port number is missing, cannot perform recovery.")
         else:
-            print("Attempting general server recovery...")
-        return None
+            self.logger.info("Attempting general server recovery...")
+        return super().recovery_action(func, error, *args, **kwargs)
 
     @staticmethod
     def _kill_process_on_port(port):
@@ -58,7 +67,6 @@ class ServerErrorHandler(ErrorHandler):
                 try:
                     for conn in proc.connections(kind='inet'):
                         if conn.laddr.port == port:
-                            print(f"Killing process {proc.info['pid']} ({proc.info['name']}) using port {port}")
                             os.kill(proc.info['pid'], signal.SIGKILL)
                 except (psutil.AccessDenied, psutil.NoSuchProcess):
                     pass
@@ -71,6 +79,12 @@ class ClientErrorHandler(ErrorHandler):
         super().handle_error(error, context)
 
     def recovery_action(self, func, error, *args, **kwargs):
-        print("Attempting client recovery...")
-        # TODO: implement client recovery logic
-        return None
+        self.logger.info("Attempting client recovery...")
+        if isinstance(error, (ConnectionRefusedError, BrokenPipeError)):
+            time.sleep(2)
+            if 'self' in kwargs and hasattr(kwargs['self'], 'sock'):
+                kwargs['self'].sock.close()
+                kwargs['self'].sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                kwargs['self'].sock.settimeout(2)
+                return func(*args, **kwargs)
+        return super().recovery_action(func, error, *args, **kwargs)

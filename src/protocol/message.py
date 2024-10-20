@@ -10,8 +10,8 @@ class Message:
         self.addr = addr
         self._recv_buffer = b""
         self._send_buffer = b""
-        self._jsonheader_len = None
-        self.jsonheader = None
+        self._json_header_len = None
+        self.json_header = None
         self.request = None
 
     def _set_selector_events_mask(self, mode):
@@ -38,19 +38,19 @@ class Message:
             except BlockingIOError:
                 pass
 
-    def _json_encode(self, obj):
+    @staticmethod
+    def _json_encode(obj):
         return json.dumps(obj).encode('utf-8')
 
-    def _json_decode(self, json_bytes):
+    @staticmethod
+    def _json_decode(json_bytes):
         return json.loads(json_bytes.decode('utf-8'))
 
     def _create_message(self, content):
         content_bytes = self._json_encode(content)
-        jsonheader = {
-            "content-length": len(content_bytes),
-        }
-        jsonheader_bytes = self._json_encode(jsonheader)
-        message = struct.pack(">H", len(jsonheader_bytes)) + jsonheader_bytes + content_bytes
+        header = { "content-length": len(content_bytes) }
+        header_bytes = self._json_encode(header)
+        message = struct.pack(">H", len(header_bytes)) + header_bytes + content_bytes
         return message
 
     def process_events(self, mask):
@@ -61,16 +61,16 @@ class Message:
 
     def read(self):
         self._read()
-        if self._jsonheader_len is None:
-            self.process_protoheader()
-        if self._jsonheader_len is not None and self.jsonheader is None:
-            self.process_jsonheader()
-        if self.jsonheader and self.request is None:
+        if self._json_header_len is None:
+            self.process_proto_header()
+        if self._json_header_len is not None and self.json_header is None:
+            self.process_json_header()
+        if self.json_header and self.request is None:
             self.process_request()
 
     def write(self):
         if self.request and not self._send_buffer:
-            response = {"result": "ok"}
+            response = { "result": "ok" }
             message = self._create_message(response)
             self._send_buffer += message
         self._write()
@@ -87,18 +87,18 @@ class Message:
         finally:
             self.sock = None
 
-    def process_protoheader(self):
+    def process_proto_header(self):
         if len(self._recv_buffer) >= 2:
-            self._jsonheader_len = struct.unpack(">H", self._recv_buffer[:2])[0]
+            self._json_header_len = struct.unpack(">H", self._recv_buffer[:2])[0]
             self._recv_buffer = self._recv_buffer[2:]
 
-    def process_jsonheader(self):
-        if len(self._recv_buffer) >= self._jsonheader_len:
-            self.jsonheader = self._json_decode(self._recv_buffer[:self._jsonheader_len])
-            self._recv_buffer = self._recv_buffer[self._jsonheader_len:]
+    def process_json_header(self):
+        if len(self._recv_buffer) >= self._json_header_len:
+            self.json_header = self._json_decode(self._recv_buffer[:self._json_header_len])
+            self._recv_buffer = self._recv_buffer[self._json_header_len:]
 
     def process_request(self):
-        content_len = self.jsonheader["content-length"]
+        content_len = self.json_header["content-length"]
         if len(self._recv_buffer) >= content_len:
             self.request = self._json_decode(self._recv_buffer[:content_len])
             self._recv_buffer = self._recv_buffer[content_len:]
