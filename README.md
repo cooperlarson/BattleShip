@@ -13,7 +13,15 @@ Python implementation of BattleShip for 2 players using sockets.
 * **ErrorHandler Wrapper Class**: Provides error handling and recovery mechanisms for server and client methods.
 * **Unit Tests for Client-Server Communication**: Validates client-server communication, message integrity, and server reliability (work in progress).
 
+# Sprint 2
 
+## Deliverables:
+
+* **Designed and Implemented Protocol in Client and Server**: Developed a communication protocol for message exchange between the server and clients.
+* **Defined the Structure and Format of Messages**: Established the format for messages exchanged between the server and clients, including message types, data fields, and expected responses.
+* **Receive, Parse, and Process Messages**: Handles incoming messages from clients and parses different message types such as join requests, move commands, and chat messages.
+* **Send Messages to Server**: Implement the ability to send detailed messages to the server, parse server responses, and provide feedback to the user about any errors.
+* **Handle Client Connections and Disconnections**: Implemented mechanisms to manage client connections and disconnections, keep track of connected clients, and inform other clients when a player joins or leaves the game.
 
 ## How to play (note this is in active dev):
 
