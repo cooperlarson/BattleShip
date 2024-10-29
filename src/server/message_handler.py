@@ -13,15 +13,14 @@ class MessageHandler:
         self.connection_manager = connection_manager
 
     def handle_message(self, msg: MessageProcessor):
-        request = msg.request
-        if request:
-            if isinstance(request, JoinRequest):
+        if msg.request:
+            if isinstance(msg.request, JoinRequest):
                 self.handle_join(msg)
-            elif isinstance(request, MoveRequest):
+            elif isinstance(msg.request, MoveRequest):
                 self.handle_move(msg)
-            elif isinstance(request, ChatRequest):
+            elif isinstance(msg.request, ChatRequest):
                 self.handle_chat(msg)
-            elif isinstance(request, QuitRequest):
+            elif isinstance(msg.request, QuitRequest):
                 self.handle_quit(msg)
 
     def handle_join(self, msg: MessageProcessor):

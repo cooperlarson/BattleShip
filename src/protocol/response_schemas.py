@@ -18,6 +18,11 @@ class QuitNotification(ServerMessage):
     user: str
 
 
+class JoinNotification(ServerMessage):
+    type: str = 'join'
+    user: str
+
+
 class WelcomeMessage(BaseModel):
     type: str = 'welcome'
     message: str = "Welcome to Battleship!"

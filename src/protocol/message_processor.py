@@ -19,7 +19,7 @@ class MessageProcessor:
         self.request = None
 
     def enqueue_message(self, message):
-        self._send_buffer += message.dict() if isinstance(message, BaseModel) else message
+        self._send_buffer += message.model_dump_json().encode('utf-8') if isinstance(message, BaseModel) else message
 
     def _set_selector_events_mask(self, mode):
         events = selectors.EVENT_READ if mode == "r" else selectors.EVENT_WRITE
@@ -44,6 +44,10 @@ class MessageProcessor:
                     self.close()
             except BlockingIOError:
                 pass
+            except BrokenPipeError:
+                print("Broken pipe error: Connection was closed unexpectedly.")
+                self.sock.close()
+                self._send_buffer = b''
 
     @staticmethod
     def _json_encode(obj):
