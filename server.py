@@ -1,7 +1,9 @@
 import socket
 import selectors
 import logging
+import argparse
 
+from src.protocol.response_schemas import JoinNotification
 from src.util.error_handler import ServerErrorHandler
 from src.game.state import State
 from src.server.connection_manager import ConnectionManager
@@ -41,7 +43,7 @@ class BattleshipServer:
                 for key, mask in events:
                     if key.data is None:
                         addr = self.connection_manager.accept_connection(key.fileobj)
-                        self.connection_manager.notify_clients({"type": "join", "player_name": addr})
+                        self.connection_manager.notify_clients(JoinNotification(user=addr))
                     else:
                         msg = key.data
                         try:
@@ -55,3 +57,15 @@ class BattleshipServer:
         finally:
             self.sel.close()
             self.sock.close()
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Start the Battleship server.')
+    parser.add_argument('--port', type=int, default=29999, help='Port number to run the server on')
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    server = BattleshipServer(port=args.port)
+    server.run()

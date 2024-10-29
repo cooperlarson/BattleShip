@@ -1,10 +1,9 @@
 import selectors
 import socket
-
 from src.protocol.message_processor import MessageProcessor
-from src.protocol.schemas import JoinRequest, Request
 from src.util.error_handler import ClientErrorHandler
 from src.client.game_menu import GameMenu
+import argparse
 
 
 class BattleshipClient:
@@ -31,6 +30,7 @@ class BattleshipClient:
                     if mask & selectors.EVENT_READ:
                         self.msg.read()
                         self.game_menu.handle_response()
+                self.game_menu.process_user_input()
         except KeyboardInterrupt:
             print("Client shutting down...")
         finally:
@@ -38,6 +38,13 @@ class BattleshipClient:
             self.sock.close()
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Start the Battleship client.')
+    parser.add_argument('--port', type=int, default=16456, help='Port number to run the client on')
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    client = BattleshipClient()
+    args = parse_args()
+    client = BattleshipClient(port=args.port)
     client.run()
