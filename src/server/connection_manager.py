@@ -1,5 +1,6 @@
 import selectors
-from src.protocol.game_message import GameMessage
+
+from src.protocol.response_schemas import WelcomeMessage
 
 
 class ConnectionManager:
@@ -13,9 +14,7 @@ class ConnectionManager:
         conn.setblocking(False)
         self.sel.register(conn, selectors.EVENT_READ, data=None)
         self.clients[conn] = addr
-        game_message = GameMessage(self.sel, conn, addr)
-        welcome_message = game_message.create_welcome_message("Welcome to Battleship! Please enter your player name:")
-        conn.send(welcome_message)
+        conn.send(WelcomeMessage().dict())
         return addr
 
     def remove_client(self, addr):

@@ -1,8 +1,10 @@
 import selectors
 import socket
 
+from src.protocol.message_processor import MessageProcessor
+from src.protocol.schemas import JoinRequest, Request
 from src.util.error_handler import ClientErrorHandler
-from src.protocol.game_message import GameMessage
+from src.client.game_menu import GameMenu
 
 
 class BattleshipClient:
@@ -14,7 +16,8 @@ class BattleshipClient:
         self.sock.setblocking(False)
         self.sock.connect_ex(self.server_address)
         self.sel.register(self.sock, selectors.EVENT_WRITE, data=None)
-        self.msg = GameMessage(self.sel, self.sock, self.server_address)
+        self.msg = MessageProcessor(self.sel, self.sock, self.server_address)
+        self.game_menu = GameMenu(self.msg)
 
     @ClientErrorHandler()
     def run(self):
@@ -27,32 +30,12 @@ class BattleshipClient:
                         self.msg.write()
                     if mask & selectors.EVENT_READ:
                         self.msg.read()
-                        self.handle_response()
+                        self.game_menu.handle_response()
         except KeyboardInterrupt:
             print("Client shutting down...")
         finally:
             self.sel.close()
             self.sock.close()
-
-    @ClientErrorHandler()
-    def handle_response(self):
-        if self.msg.request:
-            message_type = self.msg.request.get("type")
-            if message_type == "welcome":
-                print(self.msg.request.get("message"))
-                player_name = input("Enter your player name: ")
-                self.msg.enqueue_message(self.msg.create_join_message(player_name))
-            elif message_type == "ack":
-                result = self.msg.request.get("result")
-                if result == "joined":
-                    print(f"Successfully joined as {self.msg.request.get('player_name')}")
-                elif result == "move_processed":
-                    hit = self.msg.request.get("hit")
-                    print(f"Move result: {'Hit!' if hit else 'Miss!'}")
-                elif result == "chat_received":
-                    print(f"Chat acknowledged for {self.msg.request.get('player_name')}")
-                elif result == "quit_success":
-                    print(f"Successfully quit the game for {self.msg.request.get('player_name')}")
 
 
 if __name__ == "__main__":

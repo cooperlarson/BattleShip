@@ -2,8 +2,12 @@ import selectors
 import json
 import struct
 
+from pydantic import BaseModel
 
-class Message:
+from src.protocol.schemas import JoinRequest, MoveRequest, ChatRequest, QuitRequest
+
+
+class MessageProcessor:
     def __init__(self, selector, sock, addr):
         self.selector = selector
         self.sock = sock
@@ -15,7 +19,7 @@ class Message:
         self.request = None
 
     def enqueue_message(self, message):
-        self._send_buffer += message
+        self._send_buffer += message.dict() if isinstance(message, BaseModel) else message
 
     def _set_selector_events_mask(self, mode):
         events = selectors.EVENT_READ if mode == "r" else selectors.EVENT_WRITE
@@ -73,9 +77,7 @@ class Message:
 
     def write(self):
         if self.request and not self._send_buffer:
-            response = { "result": "ok" }
-            message = self.create_message(response)
-            self._send_buffer += message
+            self._send_buffer += self.create_message({ "result": "ok" })
         self._write()
 
     def close(self):
@@ -106,4 +108,15 @@ class Message:
             self.request = self._json_decode(self._recv_buffer[:content_len])
             self._recv_buffer = self._recv_buffer[content_len:]
             print(f"Received request: {self.request} from {self.addr}")
+
+            message_type = self.request.get("type")
+            if message_type == "join":
+                self.request = JoinRequest(**self.request)
+            elif message_type == "move":
+                self.request = MoveRequest(**self.request)
+            elif message_type == "chat":
+                self.request = ChatRequest(**self.request)
+            elif message_type == "quit":
+                self.request = QuitRequest(**self.request)
+
             self._set_selector_events_mask("w")

@@ -45,8 +45,6 @@ class TestTCP(unittest.TestCase):
 
         time.sleep(1)
 
-        expected_message = {"result": "ok"}
-
         self.assertTrue(client_thread.is_alive(), "Client thread should still be running.")
         self.assertTrue(self.server_thread.is_alive(), "Server thread should still be running.")
 
