@@ -5,6 +5,7 @@ import time
 from server import BattleshipServer
 from client import BattleshipClient
 from src.util.logger import Logger
+from src.protocol.schemas import JoinRequest, MoveRequest, ChatRequest, QuitRequest, AckResponse
 
 
 class TestGame(unittest.TestCase):
@@ -46,8 +47,8 @@ class TestGame(unittest.TestCase):
 
         time.sleep(1)
 
-        join_command = {"type": "join", "player_name": "Player1"}
-        client.msg._send_buffer += client.msg.create_message(join_command)
+        join_request = JoinRequest(user="Player1")
+        client.msg._send_buffer += client.msg.create_message(join_request)
 
         time.sleep(1)
 
@@ -61,8 +62,8 @@ class TestGame(unittest.TestCase):
 
         time.sleep(1)
 
-        move_command = {"type": "move", "player_name": "Player1", "row": 1, "col": 1}
-        client.msg._send_buffer += client.msg.create_message(move_command)
+        move_request = MoveRequest(user="Player1", row=1, col=1)
+        client.msg._send_buffer += client.msg.create_message(move_request)
 
         time.sleep(1)
 
@@ -76,8 +77,8 @@ class TestGame(unittest.TestCase):
 
         time.sleep(1)
 
-        chat_command = {"type": "chat", "player_name": "Player1", "message": "Hello, World!"}
-        client.msg._send_buffer += client.msg.create_message(chat_command)
+        chat_request = ChatRequest(user="Player1", message="Hello, World!")
+        client.msg._send_buffer += client.msg.create_message(chat_request)
 
         time.sleep(1)
 
@@ -91,8 +92,8 @@ class TestGame(unittest.TestCase):
 
         time.sleep(1)
 
-        quit_command = {"type": "quit", "player_name": "Player1"}
-        client.msg._send_buffer += client.msg.create_message(quit_command)
+        quit_request = QuitRequest(user="Player1")
+        client.msg._send_buffer += client.msg.create_message(quit_request)
 
         time.sleep(1)
 
