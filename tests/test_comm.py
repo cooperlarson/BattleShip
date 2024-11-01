@@ -47,20 +47,20 @@ class TestComm(unittest.TestCase):
 
         time.sleep(1)
 
-        client1.msg.enqueue_message(JoinRequest(user="Player1"))
-        client2.msg.enqueue_message(JoinRequest(user="Player2"))
+        client1.msg_processor.send(JoinRequest(user="Player1"))
+        client2.msg_processor.send(JoinRequest(user="Player2"))
 
         time.sleep(1)
 
-        client1.msg.enqueue_message(MoveRequest(user="Player1", row=1, col=1))
+        client1.msg_processor.send(MoveRequest(user="Player1", row=1, col=1))
 
         time.sleep(1)
 
-        client2.msg.enqueue_message(ChatRequest(user="Player2", message="Hello there!"))
+        client2.msg_processor.send(ChatRequest(user="Player2", message="Hello there!"))
 
         time.sleep(1)
 
-        client1.msg.enqueue_message(QuitRequest(user="Player1"))
+        client1.msg_processor.send(QuitRequest(user="Player1"))
 
         time.sleep(1)
 
