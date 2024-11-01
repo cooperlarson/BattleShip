@@ -3,7 +3,6 @@ import selectors
 import logging
 import argparse
 
-from src.protocol.response_schemas import JoinNotification
 from src.util.error_handler import ServerErrorHandler
 from src.game.state import State
 from src.server.connection_manager import ConnectionManager

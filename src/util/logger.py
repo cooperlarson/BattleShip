@@ -3,13 +3,23 @@ from io import StringIO
 
 
 class Logger:
-    def __init__(self, name='Logger'):
+    def __init__(self, name='Logger', log_file=None):
         self.logger = logging.getLogger(name)
         self.logger.setLevel(logging.DEBUG)
+
         self.buffer = StringIO()
-        self.handler = logging.StreamHandler(self.buffer)
-        self.handler.setLevel(logging.DEBUG)
-        self.logger.addHandler(self.handler)
+        stream_handler = logging.StreamHandler(self.buffer)
+        stream_handler.setLevel(logging.DEBUG)
+        self.logger.addHandler(stream_handler)
+
+        if log_file:
+            file_handler = logging.FileHandler(log_file)
+            file_handler.setLevel(logging.DEBUG)
+            file_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+            file_handler.setFormatter(file_format)
+            self.logger.addHandler(file_handler)
+
+        self.logger.propagate = False
 
     def get_logs(self):
         return self.buffer.getvalue()

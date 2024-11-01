@@ -11,20 +11,19 @@ from src.util.logger import Logger
 
 class ErrorHandler:
     def __init__(self, logger=None):
-        self.logger = logger or Logger()
+        self.logger = logger or Logger(log_file="general.log")
         self.dump_logs = False
 
     def log_error(self, error, context):
         error_msg = f"Error in {context}: {repr(error)}"
         self.logger.error(error_msg)
-        traceback.print_exc()
+        self.logger.error(traceback.format_exc())
 
     def __call__(self, func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             try:
                 result = func(*args, **kwargs)
-                self.logger.clear()  # Clear logs if successful
                 return result
             except Exception as e:
                 self.handle_error(e, func.__name__, *args, **kwargs)
@@ -35,12 +34,13 @@ class ErrorHandler:
         self.log_error(error, context)
 
     def recovery_action(self, func, error, *args, **kwargs):
-        if self.dump_logs:
-            print(self.logger.get_logs())
-        return None
+        pass
 
 
 class ServerErrorHandler(ErrorHandler):
+    def __init__(self, logger=None):
+        super().__init__(logger or Logger(log_file="server.log"))
+
     def handle_error(self, error, context, *args, **kwargs):
         super().handle_error(error, context)
 
@@ -58,7 +58,6 @@ class ServerErrorHandler(ErrorHandler):
                 self.logger.error("Port number is missing, cannot perform recovery.")
         else:
             self.logger.info("Attempting general server recovery...")
-        return super().recovery_action(func, error, *args, **kwargs)
 
     @staticmethod
     def _kill_process_on_port(port):
@@ -75,6 +74,9 @@ class ServerErrorHandler(ErrorHandler):
 
 
 class ClientErrorHandler(ErrorHandler):
+    def __init__(self, logger=None):
+        super().__init__(logger or Logger(log_file="client.log"))
+
     def handle_error(self, error, context, *args, **kwargs):
         super().handle_error(error, context)
 
@@ -87,4 +89,3 @@ class ClientErrorHandler(ErrorHandler):
                 kwargs['self'].sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 kwargs['self'].sock.settimeout(2)
                 return func(*args, **kwargs)
-        return super().recovery_action(func, error, *args, **kwargs)
