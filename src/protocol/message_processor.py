@@ -1,10 +1,9 @@
-import selectors
 import json
+import logging
+import selectors
 import struct
 
 from pydantic import BaseModel
-
-from src.protocol.schemas import JoinRequest, MoveRequest, ChatRequest, QuitRequest
 
 
 class MessageProcessor:
@@ -14,16 +13,14 @@ class MessageProcessor:
         self.addr = addr
         self._recv_buffer = b""
         self._send_buffer = b""
-        self._json_header_len = None
-        self.json_header = None
         self.request = None
 
-    def enqueue_message(self, message):
-        self._send_buffer += message.model_dump_json().encode('utf-8') if isinstance(message, BaseModel) else message
-
-    def _set_selector_events_mask(self, mode):
-        events = selectors.EVENT_READ if mode == "r" else selectors.EVENT_WRITE
-        self.selector.modify(self.sock, events, data=self)
+    def process_events(self, mask):
+        if mask & selectors.EVENT_READ:
+            self._read()
+            self._process_request()
+        if mask & selectors.EVENT_WRITE:
+            self._write()
 
     def _read(self):
         try:
@@ -40,87 +37,49 @@ class MessageProcessor:
             try:
                 sent = self.sock.send(self._send_buffer)
                 self._send_buffer = self._send_buffer[sent:]
-                if not self._send_buffer:
-                    self.close()
-            except BlockingIOError:
-                pass
             except BrokenPipeError:
-                print("Broken pipe error: Connection was closed unexpectedly.")
-                self.sock.close()
-                self._send_buffer = b''
+                self.close()
+
+    def _process_request(self):
+        if len(self._recv_buffer) < 2:
+            return  # Wait until the full header is received
+
+        header_length = struct.unpack(">H", self._recv_buffer[:2])[0]
+        if len(self._recv_buffer) < 2 + header_length:
+            return  # Wait until the full message is received
+
+        # Decode JSON content
+        content_bytes = self._recv_buffer[2:2 + header_length]
+        self._recv_buffer = self._recv_buffer[2 + header_length:]
+        try:
+            self.request = json.loads(content_bytes.decode('utf-8'))
+            logging.info(f"Received message: {self.request}")
+        except json.JSONDecodeError:
+            logging.error("Failed to decode message content")
+
+    def send(self, content):
+        if isinstance(content, BaseModel):
+            content = content.model_dump_json().encode('utf-8')
+        elif isinstance(content, str):
+            content = content.encode('utf-8')
+        elif not isinstance(content, bytes):
+            raise TypeError("Content must be a Pydantic model, str, or bytes")
+
+        message_data = self.create_message(content)
+        self._send_buffer += message_data
+        self.selector.modify(self.sock, selectors.EVENT_WRITE, data=self)
 
     @staticmethod
-    def _json_encode(obj):
-        return json.dumps(obj).encode('utf-8')
+    def create_message(content):
+        if not isinstance(content, bytes):
+            raise TypeError("Content must be in bytes")
 
-    @staticmethod
-    def _json_decode(json_bytes):
-        return json.loads(json_bytes.decode('utf-8'))
-
-    def create_message(self, content):
-        content_bytes = self._json_encode(content)
-        header = { "content-length": len(content_bytes) }
-        header_bytes = self._json_encode(header)
-        message = struct.pack(">H", len(header_bytes)) + header_bytes + content_bytes
-        return message
-
-    def process_events(self, mask):
-        if mask & selectors.EVENT_READ:
-            self.read()
-        if mask & selectors.EVENT_WRITE:
-            self.write()
-
-    def read(self):
-        self._read()
-        if self._json_header_len is None:
-            self.process_proto_header()
-        if self._json_header_len is not None and self.json_header is None:
-            self.process_json_header()
-        if self.json_header and self.request is None:
-            self.process_request()
-
-    def write(self):
-        if self.request and not self._send_buffer:
-            self._send_buffer += self.create_message({ "result": "ok" })
-        self._write()
+        header_bytes = struct.pack(">H", len(content))
+        return header_bytes + content
 
     def close(self):
         try:
             self.selector.unregister(self.sock)
-        except Exception as e:
-            print(f"Error: {e}")
-        try:
             self.sock.close()
-        except OSError as e:
-            print(f"Error: {e}")
-        finally:
-            self.sock = None
-
-    def process_proto_header(self):
-        if len(self._recv_buffer) >= 2:
-            self._json_header_len = struct.unpack(">H", self._recv_buffer[:2])[0]
-            self._recv_buffer = self._recv_buffer[2:]
-
-    def process_json_header(self):
-        if len(self._recv_buffer) >= self._json_header_len:
-            self.json_header = self._json_decode(self._recv_buffer[:self._json_header_len])
-            self._recv_buffer = self._recv_buffer[self._json_header_len:]
-
-    def process_request(self):
-        content_len = self.json_header["content-length"]
-        if len(self._recv_buffer) >= content_len:
-            self.request = self._json_decode(self._recv_buffer[:content_len])
-            self._recv_buffer = self._recv_buffer[content_len:]
-            print(f"Received request: {self.request} from {self.addr}")
-
-            message_type = self.request.get("type")
-            if message_type == "join":
-                self.request = JoinRequest(**self.request)
-            elif message_type == "move":
-                self.request = MoveRequest(**self.request)
-            elif message_type == "chat":
-                self.request = ChatRequest(**self.request)
-            elif message_type == "quit":
-                self.request = QuitRequest(**self.request)
-
-            self._set_selector_events_mask("w")
+        except Exception as e:
+            logging.error(f"Error closing socket {self.addr}: {e}")

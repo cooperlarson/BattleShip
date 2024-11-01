@@ -1,46 +1,52 @@
 import selectors
 import socket
-from src.protocol.message_processor import MessageProcessor
+import argparse
+import logging
 from src.util.error_handler import ClientErrorHandler
 from src.client.game_menu import GameMenu
-import argparse
+from src.protocol.message_processor import MessageProcessor
 
 
 class BattleshipClient:
-    @ClientErrorHandler()
-    def __init__(self, host='localhost', port=16456):
-        self.sel = selectors.DefaultSelector()
+    def __init__(self, host='localhost', port=29999):
         self.server_address = (host, port)
+        self.sel = selectors.DefaultSelector()
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setblocking(False)
         self.sock.connect_ex(self.server_address)
-        self.sel.register(self.sock, selectors.EVENT_WRITE, data=None)
-        self.msg = MessageProcessor(self.sel, self.sock, self.server_address)
-        self.game_menu = GameMenu(self.msg)
+        self.sel.register(self.sock, selectors.EVENT_WRITE | selectors.EVENT_READ)
+        self.msg_processor = MessageProcessor(self.sel, self.sock, self.server_address)
+        self.game_menu = GameMenu(self.msg_processor)
 
     @ClientErrorHandler()
     def run(self):
-        print(f"Client connecting to {self.server_address}")
+        logging.info(f"Client connecting to {self.server_address}")
         try:
             while True:
                 events = self.sel.select(timeout=None)
                 for key, mask in events:
-                    if mask & selectors.EVENT_WRITE:
-                        self.msg.write()
                     if mask & selectors.EVENT_READ:
-                        self.msg.read()
+                        self.msg_processor.process_events(mask)
                         self.game_menu.handle_response()
-                self.game_menu.process_user_input()
+                    if mask & selectors.EVENT_WRITE:
+                        self.msg_processor.process_events(mask)
+
+                if not events:
+                    self.game_menu.process_user_input()
         except KeyboardInterrupt:
-            print("Client shutting down...")
+            logging.info("Client shutting down...")
         finally:
-            self.sel.close()
-            self.sock.close()
+            self._close()
+
+    def _close(self):
+        self.sel.unregister(self.sock)
+        self.sock.close()
+        self.sel.close()
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Start the Battleship client.')
-    parser.add_argument('--port', type=int, default=16456, help='Port number to run the client on')
+    parser.add_argument('--port', type=int, default=29999, help='Port number to run the client on')
     return parser.parse_args()
 
 

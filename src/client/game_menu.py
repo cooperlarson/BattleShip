@@ -1,3 +1,4 @@
+from src.protocol.response_schemas import JoinNotification
 from src.protocol.schemas import MoveRequest, ChatRequest, QuitRequest, JoinRequest, Request
 from src.util.error_handler import ClientErrorHandler
 
@@ -15,6 +16,9 @@ class GameMenu:
             if req_type == "welcome":
                 self.user = input("Enter your player name: ")
                 self.msg.enqueue_message(JoinRequest(user=self.user))
+            elif req_type == "join":
+                join_msg = JoinNotification(**self.msg.request)
+                print(f"Player {join_msg.user} has joined the game.")
             elif req_type == "ack":
                 self._handle_ack()
             elif req_type == "error":
@@ -67,7 +71,7 @@ class GameMenu:
         try:
             _, x, y = user_input.split()
             x, y = int(x), int(y)
-            self.msg.enqueue_message(MoveRequest(user=self.user, x=x, y=y))
+            self.msg.send(MoveRequest(user=self.user, x=x, y=y))
             print(f"Move sent: ({x}, {y})")
         except ValueError:
             print("Invalid move command. Use the format: move [x] [y]")
@@ -75,11 +79,11 @@ class GameMenu:
     def handle_chat(self, user_input):
         try:
             _, message = user_input.split(' ', 1)
-            self.msg.enqueue_message(ChatRequest(user=self.user, message=message))
+            self.msg.send(ChatRequest(user=self.user, message=message))
             print(f"Chat sent: {message}")
         except ValueError:
             print("Invalid chat command. Use the format: chat [message]")
 
     def quit_game(self):
-        self.msg.enqueue_message(QuitRequest(user=self.user))
+        self.msg.send(QuitRequest(user=self.user))
         print("Quitting the game...")
