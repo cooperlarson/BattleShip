@@ -4,7 +4,7 @@ import argparse
 import logging
 from src.util.error_handler import ClientErrorHandler
 from src.client.game_menu import GameMenu
-from src.protocol.message_processor import MessageProcessor
+from src.protocol.connection import Connection
 
 
 class BattleshipClient:
@@ -15,24 +15,23 @@ class BattleshipClient:
         self.sock.setblocking(False)
         self.sock.connect_ex(self.server_address)
         self.sel.register(self.sock, selectors.EVENT_WRITE | selectors.EVENT_READ)
-        self.msg_processor = MessageProcessor(self.sel, self.sock, self.server_address)
-        self.game_menu = GameMenu(self.msg_processor)
+        self.connection = Connection(self.sel, self.sock, self.server_address)
+        self.game_menu = GameMenu(self.connection)
 
     @ClientErrorHandler()
     def run(self):
         logging.info(f"Client connecting to {self.server_address}")
         try:
             while True:
-                events = self.sel.select(timeout=None)
+                events = self.sel.select(timeout=0.1)
                 for key, mask in events:
                     if mask & selectors.EVENT_READ:
-                        self.msg_processor.process_events(mask)
+                        self.connection.process_events(mask)
                         self.game_menu.handle_response()
                     if mask & selectors.EVENT_WRITE:
-                        self.msg_processor.process_events(mask)
+                        self.connection.process_events(mask)
 
-                if not events:
-                    self.game_menu.process_user_input()
+                self.game_menu.process_user_input()
         except KeyboardInterrupt:
             logging.info("Client shutting down...")
         finally:

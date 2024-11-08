@@ -4,9 +4,7 @@ import logging
 import argparse
 
 from src.util.error_handler import ServerErrorHandler
-from src.game.state import State
 from src.server.connection_manager import ConnectionManager
-from src.server.message_handler import MessageHandler
 
 logging.basicConfig(level=logging.INFO)
 
@@ -22,20 +20,21 @@ class BattleshipServer:
         self.sock.setblocking(False)
         self.sel.register(self.sock, selectors.EVENT_READ, data=None)
 
-        self.state = State()
         self.connection_manager = ConnectionManager(self.sel)
-        self.message_handler = MessageHandler(self.state, self.connection_manager)
 
     @ServerErrorHandler()
     def run(self):
         logging.info(f"Server running on {self.server_address}")
         try:
             while True:
-                for key, mask in self.sel.select(timeout=None):
+                for key, mask in self.sel.select(timeout=0.1):
                     if key.data is None:
                         self.connection_manager.accept_connection(key.fileobj)
                     else:
+                        client_id = f"{key.data.addr[0]}:{key.data.addr[1]}"
                         key.data.process_events(mask)
+                        if key.data.request:
+                            self.connection_manager.route_message(client_id, key.data.request)
         except KeyboardInterrupt:
             logging.info("Server shutting down...")
         finally:

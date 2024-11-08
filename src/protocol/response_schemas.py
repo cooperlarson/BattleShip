@@ -10,7 +10,8 @@ class AckResponse(BaseModel):
 
 
 class ServerMessage(BaseModel):
-    type: str
+    type: str = 'info'
+    message: str = ''
 
 
 class QuitNotification(ServerMessage):
@@ -21,6 +22,24 @@ class QuitNotification(ServerMessage):
 class JoinNotification(ServerMessage):
     type: str = 'join'
     user: str
+
+
+class GameStartedNotification(ServerMessage):
+    type: str = 'game_started'
+    player1: str
+    player2: str
+
+
+class ViewResponse(BaseModel):
+    type: str = 'view'
+    user: str
+    board: str
+
+
+class NameChangeResponse(BaseModel):
+    type: str = 'set_name'
+    name: str
+    success: bool
 
 
 class WelcomeMessage(BaseModel):

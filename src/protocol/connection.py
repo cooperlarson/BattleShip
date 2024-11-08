@@ -5,9 +5,13 @@ import struct
 
 from pydantic import BaseModel
 
+from src.protocol.response_schemas import NameChangeResponse
 
-class MessageProcessor:
+
+class Connection:
     def __init__(self, selector, sock, addr):
+        self.id = f"{addr[0]}:{addr[1]}"
+        self.name = None
         self.selector = selector
         self.sock = sock
         self.addr = addr
@@ -27,39 +31,49 @@ class MessageProcessor:
             data = self.sock.recv(4096)
             if data:
                 self._recv_buffer += data
+                logging.debug(f"Received {len(data)} bytes from {self.addr}")
             else:
-                raise RuntimeError("Peer closed.")
+                raise RuntimeError("Peer closed connection.")
         except BlockingIOError:
             pass
+        except RuntimeError as e:
+            logging.error(f"Read error on {self.addr}: {e}")
+            self.close()
 
     def _write(self):
         if self._send_buffer:
             try:
                 sent = self.sock.send(self._send_buffer)
+                logging.debug(f"Sent {sent} bytes to {self.addr}")
                 self._send_buffer = self._send_buffer[sent:]
             except BrokenPipeError:
+                logging.error("Broken pipe error, closing connection")
                 self.close()
+
+        if not self._send_buffer:
+            self.selector.modify(self.sock, selectors.EVENT_READ, data=self)
 
     def _process_request(self):
         if len(self._recv_buffer) < 2:
-            return  # Wait until the full header is received
+            return
 
         header_length = struct.unpack(">H", self._recv_buffer[:2])[0]
         if len(self._recv_buffer) < 2 + header_length:
-            return  # Wait until the full message is received
+            return
 
-        # Decode JSON content
         content_bytes = self._recv_buffer[2:2 + header_length]
         self._recv_buffer = self._recv_buffer[2 + header_length:]
         try:
             self.request = json.loads(content_bytes.decode('utf-8'))
             logging.info(f"Received message: {self.request}")
+            if self.request.get('type') == 'set_name':
+                self.set_name(self.request)
         except json.JSONDecodeError:
             logging.error("Failed to decode message content")
 
     def send(self, content):
         if isinstance(content, BaseModel):
-            content = content.model_dump_json().encode('utf-8')
+            content = content.json().encode('utf-8')
         elif isinstance(content, str):
             content = content.encode('utf-8')
         elif not isinstance(content, bytes):
@@ -67,7 +81,8 @@ class MessageProcessor:
 
         message_data = self.create_message(content)
         self._send_buffer += message_data
-        self.selector.modify(self.sock, selectors.EVENT_WRITE, data=self)
+        self.selector.modify(self.sock, selectors.EVENT_WRITE | selectors.EVENT_READ, data=self)
+        self.process_events(selectors.EVENT_WRITE)
 
     @staticmethod
     def create_message(content):
@@ -81,5 +96,16 @@ class MessageProcessor:
         try:
             self.selector.unregister(self.sock)
             self.sock.close()
+            logging.info(f"Closed connection to {self.addr}")
         except Exception as e:
             logging.error(f"Error closing socket {self.addr}: {e}")
+
+    def set_name(self, msg):
+        print(msg)
+        if 'user' in msg:
+            self.name = msg['user']
+            logging.info(f"Set name for {self.id} to {self.name}")
+            self.send(NameChangeResponse(name=self.name, success=True))
+        else:
+            logging.warning(f"Invalid name set request from {self.id}")
+            self.send(NameChangeResponse(name=None, success=False))

@@ -1,43 +1,60 @@
-from src.protocol.response_schemas import JoinNotification
-from src.protocol.schemas import MoveRequest, ChatRequest, QuitRequest, JoinRequest, Request
+from src.game.board import Board
+from src.protocol.response_schemas import JoinNotification, GameStartedNotification, ServerMessage, ViewResponse, \
+    NameChangeResponse
+from src.protocol.schemas import MoveRequest, ChatRequest, QuitRequest, JoinRequest, Request, ViewRequest, BoardRequest, \
+    SetNameRequest
 from src.util.error_handler import ClientErrorHandler
 
 
 class GameMenu:
-    def __init__(self, msg_processor):
-        self.msg = msg_processor
-        self.user = None
+    def __init__(self, player):
+        self.player = player
         self.game_active = False
 
     @ClientErrorHandler()
     def handle_response(self):
-        if self.msg.request:
-            req_type = self.msg.request.get("type")
+        if self.player.request:
+            req_type = self.player.request.get("type")
             if req_type == "welcome":
-                self.user = input("Enter your player name: ")
-                self.msg.enqueue_message(JoinRequest(user=self.user))
+                self.player.send(SetNameRequest(user=input("Enter your player name: ")))
+            if req_type == 'set_name':
+                name_change = NameChangeResponse(**self.player.request)
+                self.player.name = name_change.name
+                print(f"Name set to {name_change.name}: {name_change.success}")
+            elif req_type == "info":
+                print(ServerMessage(**self.player.request).message)
             elif req_type == "join":
-                join_msg = JoinNotification(**self.msg.request)
+                join_msg = JoinNotification(**self.player.request)
                 print(f"Player {join_msg.user} has joined the game.")
+            elif req_type == "game_started":
+                started_msg = GameStartedNotification(**self.player.request)
+                print(f"Game started! Place your ships. Players: {started_msg.player1}, {started_msg.player2}")
+                board = Board()
+                board.place_ships()
+                self.player.send(BoardRequest(user=self.player.name, board=board.serialize()))
+            elif req_type == "view":
+                view_msg = ViewResponse(**self.player.request)
+                print(f"Board for {view_msg.user}:\n{view_msg.board}")
             elif req_type == "ack":
                 self._handle_ack()
             elif req_type == "error":
-                print(f"Error: {self.msg.request.get('message')}")
+                print(f"Error: {self.player.request.get('message')}")
 
+    @ClientErrorHandler()
     def _handle_ack(self):
-        result = self.msg.request.get("result")
+        result = self.player.request.get("result")
         if result == "joined":
             self.game_active = True
-            print(f"Successfully joined as {self.user}.")
+            print(f"Successfully joined as {self.player.name}.")
             self.show_commands()
         elif result == "move_processed":
-            hit = self.msg.request.get("hit")
+            hit = self.player.request.get("hit")
             print(f"Move result: {'Hit!' if hit else 'Miss!'}")
         elif result == "chat_received":
-            print(f"Chat acknowledged for {self.user}")
+            print(f"Chat acknowledged for {self.player.name}")
         elif result == "quit_success":
             self.game_active = False
-            print(f"Successfully quit the game for {self.user}")
+            print(f"Successfully quit the game for {self.player.name}")
 
     def process_user_input(self):
         if not self.game_active:
@@ -67,11 +84,14 @@ class GameMenu:
         print("  view - View the current state of the game board")
         print("  quit - Quit the current game")
 
+    def view_board(self):
+        self.player.send(ViewRequest(user=self.player.name))
+
     def handle_move(self, user_input):
         try:
             _, x, y = user_input.split()
             x, y = int(x), int(y)
-            self.msg.send(MoveRequest(user=self.user, x=x, y=y))
+            self.player.send(MoveRequest(user=self.player.name, x=x, y=y))
             print(f"Move sent: ({x}, {y})")
         except ValueError:
             print("Invalid move command. Use the format: move [x] [y]")
@@ -79,11 +99,11 @@ class GameMenu:
     def handle_chat(self, user_input):
         try:
             _, message = user_input.split(' ', 1)
-            self.msg.send(ChatRequest(user=self.user, message=message))
+            self.player.send(ChatRequest(user=self.player.name, message=message))
             print(f"Chat sent: {message}")
         except ValueError:
             print("Invalid chat command. Use the format: chat [message]")
 
     def quit_game(self):
-        self.msg.send(QuitRequest(user=self.user))
+        self.player.send(QuitRequest(user=self.player.name))
         print("Quitting the game...")

@@ -10,10 +10,20 @@ class JoinRequest(Request):
     type: str = 'join'
 
 
+class BoardRequest(Request):
+    type: str = 'board'
+    board: str
+
+
 class MoveRequest(Request):
     type: str = 'move'
     row: int
     col: int
+
+
+class ViewRequest(Request):
+    type: str = 'view'
+    user: str
 
 
 class ChatRequest(Request):
@@ -23,3 +33,6 @@ class ChatRequest(Request):
 
 class QuitRequest(Request):
     type: str = 'quit'
+
+class SetNameRequest(Request):
+    type: str = 'set_name'
