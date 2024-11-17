@@ -23,6 +23,17 @@ Python implementation of BattleShip for 2 players using sockets.
 * **Send Messages to Server**: Implement the ability to send detailed messages to the server, parse server responses, and provide feedback to the user about any errors.
 * **Handle Client Connections and Disconnections**: Implemented mechanisms to manage client connections and disconnections, keep track of connected clients, and inform other clients when a player joins or leaves the game.
 
+# Sprint 3
+* **Refactor Codebase**: Refactored the codebase to improve readability, maintainability, and scalability.
+* **Simplified Message Handling**: Simplified message handling by using action based messages.
+
+# Sprint 4
+
+## Deliverables:
+* **Winning Condition**: Implement the winning condition for the game ***Work in Progress***.
+* **Command Line Arguments**: Add command line arguments to the server and client for specifying the host and port.
+* **User Interface**: Expand the user interface to include more detailed information about the game state and player actions ***Work in Progress***.
+
 ## How to play (note this is in active dev):
 
 ### Start the server:
