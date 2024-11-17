@@ -44,7 +44,7 @@ class BattleshipServer:
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Start the Battleship server.')
-    parser.add_argument('--port', type=int, default=29999, help='Port number to run the server on')
+    parser.add_argument('-p', type=int, default=29999, help='Port number to run the server on')
     return parser.parse_args()
 
 
