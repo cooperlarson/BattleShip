@@ -52,5 +52,5 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    client = BattleshipClient(port=args.port)
+    client = BattleshipClient(port=args.p, host=args.i)
     client.run()
