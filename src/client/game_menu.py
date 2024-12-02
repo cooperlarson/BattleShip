@@ -9,7 +9,7 @@ from src.protocol.response_schemas import (
     JoinNotification, ServerMessage, ViewResponse, TurnSwitchNotification, MoveResponse
 )
 from src.protocol.schemas import (
-    MoveRequest, ChatRequest, QuitRequest, ViewRequest, BoardRequest, SetNameRequest, BoardType
+    MoveRequest, QuitRequest, ViewRequest, BoardRequest, SetNameRequest, BoardType, ChatMessage
 )
 
 class GameMenu:
@@ -67,6 +67,9 @@ class GameMenu:
                 view_msg = ViewResponse(**self.player.request)
                 message = f"Opponent's Board:\n{view_msg.opponent_board}\n"
                 message += f"Board for {view_msg.user}:\n{view_msg.my_board}"
+            elif req_type == "chat":
+                chat_msg = ChatMessage(**self.player.request)
+                message = f"{chat_msg.user}: {chat_msg.message}"
             elif req_type == "error":
                 message = f"Error: {self.player.request.get('message')}"
 
@@ -145,7 +148,7 @@ class GameMenu:
     def handle_chat(self, user_input):
         try:
             _, message = user_input.split(' ', 1)
-            self.player.send(ChatRequest(user=self.player.name, message=message))
+            self.player.send(ChatMessage(user=self.player.name, message=message))
             print(f"Chat sent: {message}")
         except ValueError:
             print("Invalid chat command. Use the format: chat [message]")

@@ -1,7 +1,4 @@
-import json
-
 from pydantic import BaseModel
-from pydantic.v1 import validator
 
 
 class Request(BaseModel):
@@ -41,7 +38,7 @@ class ViewRequest(Request):
     user: str
 
 
-class ChatRequest(Request):
+class ChatMessage(Request):
     type: str = 'chat'
     message: str
 

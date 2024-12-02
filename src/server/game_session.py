@@ -5,7 +5,7 @@ from src.game.board import Board
 from src.protocol.response_schemas import AckResponse, GameStartedNotification, ServerMessage, TurnSwitchNotification, \
     ViewResponse, MoveResponse, GameOverNotification
 from src.game.game import Game
-from src.protocol.schemas import BoardRequest, ViewRequest, MoveRequest
+from src.protocol.schemas import BoardRequest, ViewRequest, MoveRequest, ChatMessage
 
 
 class GameSession:
@@ -73,8 +73,11 @@ class GameSession:
             self.notify_session(TurnSwitchNotification(user=self.game.turn))
 
     def handle_chat(self, msg):
+        msg = ChatMessage(**msg)
         logging.info(f"Chat from {msg.user}: {msg.message}")
-        msg.enqueue_message(AckResponse(result="chat_received", user=msg.user))
+        for name, player in self.game.players.items():
+            if name != msg.user:
+                player.send(ServerMessage(message=f"{msg.user}: {msg.message}"))
 
     def handle_quit(self, msg):
         logging.info(f"Player {msg.user} has quit the game.")
