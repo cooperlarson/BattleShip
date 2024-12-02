@@ -6,6 +6,7 @@ import struct
 from pydantic import BaseModel
 
 from src.protocol.response_schemas import NameChangeResponse
+from src.protocol.schemas import SetNameRequest
 
 
 class Connection:
@@ -43,33 +44,31 @@ class Connection:
     def _write(self):
         if self._send_buffer:
             try:
+                # Send data from the buffer
                 sent = self.sock.send(self._send_buffer)
-                logging.debug(f"Sent {sent} bytes to {self.addr}")
-                self._send_buffer = self._send_buffer[sent:]
+                self._send_buffer = self._send_buffer[sent:]  # Trim sent data
             except BrokenPipeError:
-                logging.error("Broken pipe error, closing connection")
+                logging.error("Broken pipe; closing connection.")
                 self.close()
+                return
 
-        if not self._send_buffer:
-            self.selector.modify(self.sock, selectors.EVENT_READ, data=self)
+            # If buffer is empty, switch back to EVENT_READ
+            if not self._send_buffer:
+                logging.debug(f"Buffer empty for {self.addr}; switching to EVENT_READ.")
+                self.selector.modify(self.sock, selectors.EVENT_READ, data=self)
 
     def _process_request(self):
-        if len(self._recv_buffer) < 2:
-            return
-
-        header_length = struct.unpack(">H", self._recv_buffer[:2])[0]
-        if len(self._recv_buffer) < 2 + header_length:
-            return
-
-        content_bytes = self._recv_buffer[2:2 + header_length]
-        self._recv_buffer = self._recv_buffer[2 + header_length:]
-        try:
-            self.request = json.loads(content_bytes.decode('utf-8'))
-            logging.info(f"Received message: {self.request}")
-            if self.request.get('type') == 'set_name':
-                self.set_name(self.request)
-        except json.JSONDecodeError:
-            logging.error("Failed to decode message content")
+        while len(self._recv_buffer) >= 2:
+            header_length = struct.unpack(">H", self._recv_buffer[:2])[0]
+            if len(self._recv_buffer) < 2 + header_length:
+                break
+            content_bytes = self._recv_buffer[2:2 + header_length]
+            self._recv_buffer = self._recv_buffer[2 + header_length:]
+            try:
+                self.request = json.loads(content_bytes.decode('utf-8'))
+                logging.info(f"Received message: {self.request}")
+            except json.JSONDecodeError:
+                logging.error("Failed to decode message content")
 
     def send(self, content):
         if isinstance(content, BaseModel):
@@ -79,16 +78,19 @@ class Connection:
         elif not isinstance(content, bytes):
             raise TypeError("Content must be a Pydantic model, str, or bytes")
 
+        # Add content to the buffer
         message_data = self.create_message(content)
         self._send_buffer += message_data
-        self.selector.modify(self.sock, selectors.EVENT_WRITE | selectors.EVENT_READ, data=self)
-        self.process_events(selectors.EVENT_WRITE)
+
+        # Register for EVENT_WRITE only if there's data to send
+        if self._send_buffer:
+            logging.debug(f"Registering EVENT_WRITE for {self.addr} with buffer size {len(self._send_buffer)}.")
+            self.selector.modify(self.sock, selectors.EVENT_WRITE | selectors.EVENT_READ, data=self)
 
     @staticmethod
     def create_message(content):
         if not isinstance(content, bytes):
             raise TypeError("Content must be in bytes")
-
         header_bytes = struct.pack(">H", len(content))
         return header_bytes + content
 
@@ -101,11 +103,12 @@ class Connection:
             logging.error(f"Error closing socket {self.addr}: {e}")
 
     def set_name(self, msg):
-        print(msg)
         if 'user' in msg:
             self.name = msg['user']
             logging.info(f"Set name for {self.id} to {self.name}")
-            self.send(NameChangeResponse(name=self.name, success=True))
+            self.request = None
+            self.send(NameChangeResponse(name=self.name, user=self.name, success=True))
         else:
             logging.warning(f"Invalid name set request from {self.id}")
             self.send(NameChangeResponse(name=None, success=False))
+            self.request = None

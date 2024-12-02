@@ -7,20 +7,20 @@ from src.util.error_handler import ClientErrorHandler
 
 
 class GameMenu:
-    def __init__(self, player):
-        self.player = player
+    def __init__(self, connection):
+        self.player = connection
         self.game_active = False
 
-    @ClientErrorHandler()
     def handle_response(self):
         if self.player.request:
             req_type = self.player.request.get("type")
             if req_type == "welcome":
+                print(ServerMessage(**self.player.request).message)
                 self.player.send(SetNameRequest(user=input("Enter your player name: ")))
-            if req_type == 'set_name':
+            elif req_type == 'set_name':
                 name_change = NameChangeResponse(**self.player.request)
-                self.player.name = name_change.name
-                print(f"Name set to {name_change.name}: {name_change.success}")
+                self.player.name = name_change.user
+                print(f"Name set to {name_change.user}: {name_change.success}")
             elif req_type == "info":
                 print(ServerMessage(**self.player.request).message)
             elif req_type == "join":
@@ -40,7 +40,8 @@ class GameMenu:
             elif req_type == "error":
                 print(f"Error: {self.player.request.get('message')}")
 
-    @ClientErrorHandler()
+            self.player.request = None
+
     def _handle_ack(self):
         result = self.player.request.get("result")
         if result == "joined":

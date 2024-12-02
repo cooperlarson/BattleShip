@@ -14,11 +14,10 @@ class BattleshipClient:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setblocking(False)
         self.sock.connect_ex(self.server_address)
-        self.sel.register(self.sock, selectors.EVENT_WRITE | selectors.EVENT_READ)
         self.connection = Connection(self.sel, self.sock, self.server_address)
+        self.sel.register(self.sock, selectors.EVENT_WRITE | selectors.EVENT_READ, data=self.connection)
         self.game_menu = GameMenu(self.connection)
 
-    @ClientErrorHandler()
     def run(self):
         logging.info(f"Client connecting to {self.server_address}")
         try:

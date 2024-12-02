@@ -38,7 +38,7 @@ class ViewResponse(BaseModel):
 
 class NameChangeResponse(BaseModel):
     type: str = 'set_name'
-    name: str
+    user: str
     success: bool
 
 

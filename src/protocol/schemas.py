@@ -36,3 +36,4 @@ class QuitRequest(Request):
 
 class SetNameRequest(Request):
     type: str = 'set_name'
+    user: str
