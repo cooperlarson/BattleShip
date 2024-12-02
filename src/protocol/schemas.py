@@ -1,4 +1,7 @@
+import json
+
 from pydantic import BaseModel
+from pydantic.v1 import validator
 
 
 class Request(BaseModel):
@@ -10,9 +13,21 @@ class JoinRequest(Request):
     type: str = 'join'
 
 
+class ShipType(BaseModel):
+    name: str
+    length: int
+    hits: int
+
+
+class BoardType(BaseModel):
+    size: int
+    grid: list[list[str]]
+    ships: list[ShipType]
+
+
 class BoardRequest(Request):
     type: str = 'board'
-    board: str
+    board: BoardType
 
 
 class MoveRequest(Request):

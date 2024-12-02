@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from typing import Optional
 
+from src.protocol.schemas import BoardType
+
 
 class AckResponse(BaseModel):
     type: str = 'ack'
@@ -33,7 +35,8 @@ class GameStartedNotification(ServerMessage):
 class ViewResponse(BaseModel):
     type: str = 'view'
     user: str
-    board: str
+    my_board: str
+    opponent_board: str
 
 
 class NameChangeResponse(BaseModel):
@@ -45,3 +48,8 @@ class NameChangeResponse(BaseModel):
 class WelcomeMessage(BaseModel):
     type: str = 'welcome'
     message: str = "Welcome to Battleship!"
+
+
+class TurnSwitchNotification(BaseModel):
+    type: str = 'turn_switch'
+    user: str

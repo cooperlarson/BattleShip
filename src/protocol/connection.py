@@ -6,7 +6,6 @@ import struct
 from pydantic import BaseModel
 
 from src.protocol.response_schemas import NameChangeResponse
-from src.protocol.schemas import SetNameRequest
 
 
 class Connection:
@@ -106,9 +105,7 @@ class Connection:
         if 'user' in msg:
             self.name = msg['user']
             logging.info(f"Set name for {self.id} to {self.name}")
-            self.request = None
             self.send(NameChangeResponse(name=self.name, user=self.name, success=True))
         else:
             logging.warning(f"Invalid name set request from {self.id}")
             self.send(NameChangeResponse(name=None, success=False))
-            self.request = None
