@@ -24,7 +24,7 @@ class Game:
 
     def both_players_submit_boards(self):
         """Checks if both players have submitted their boards."""
-        return len(self.boards) == 2
+        return len(self.boards.items()) == 2
 
     def add_player(self, player):
         """Adds a player to the game."""

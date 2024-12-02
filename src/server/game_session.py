@@ -1,10 +1,11 @@
 import logging
+import time
 
 from src.game.board import Board
 from src.protocol.response_schemas import AckResponse, GameStartedNotification, ServerMessage, TurnSwitchNotification, \
-    ViewResponse
+    ViewResponse, MoveResponse, GameOverNotification
 from src.game.game import Game
-from src.protocol.schemas import BoardRequest, ViewRequest
+from src.protocol.schemas import BoardRequest, ViewRequest, MoveRequest
 
 
 class GameSession:
@@ -32,22 +33,21 @@ class GameSession:
             self.handle_quit(msg)
 
     def handle_move(self, msg):
+        msg = MoveRequest(**msg)
         player_name = msg.user
-        move_row, move_col = msg.request.row, msg.request.col
 
-        # Use game logic to mark the hit on the opponent's board
-        for player in self.game.players:
-            if player.name != player_name:  # Find the opponent
-                hit = player.board.mark_hit(move_row, move_col)
-                msg.enqueue_message(AckResponse(result="move_processed", user=player_name, hit=hit))
+        for opp_name, opp_board in self.game.boards.items():
+            if opp_name != player_name:
+                hit = opp_board.mark_hit(msg.x, msg.y)
+                print(f"Player {player_name} hit {opp_name} at ({msg.x}, {msg.y})")
+                self.notify_session(MoveResponse(user=player_name, x=msg.x, y=msg.y, hit=hit))
 
-        # Check for game status and switch turns
-        self.game.switch_turn()
         if self.game.check_winner():
             winner_name = self.game.winner
             logging.info(f"Player {winner_name} has won the game!")
-            self.notify_session({ "type": "game_over", "winner": winner_name })
+            self.notify_session(GameOverNotification(winner=winner_name))
         else:
+            self.game.switch_turn()
             self.notify_session(TurnSwitchNotification(user=self.game.turn))
 
     def handle_view(self, msg):
@@ -86,3 +86,4 @@ class GameSession:
         for name in self.players:
             player = self.game.players[name]
             player.send(msg)
+        time.sleep(0.1)

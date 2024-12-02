@@ -1,12 +1,12 @@
 import threading
 import time
-from queue import Queue
 from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
+from prompt_toolkit import print_formatted_text
 
 from src.game.board import Board
 from src.protocol.response_schemas import (
-    JoinNotification, ServerMessage, ViewResponse, TurnSwitchNotification
+    JoinNotification, ServerMessage, ViewResponse, TurnSwitchNotification, MoveResponse
 )
 from src.protocol.schemas import (
     MoveRequest, ChatRequest, QuitRequest, ViewRequest, BoardRequest, SetNameRequest, BoardType
@@ -21,17 +21,13 @@ class GameMenu:
         self.awaiting_ship_placement = False
         self.stop_threads = False
 
-        # Initialize prompt session and synchronization primitives
+        # Initialize prompt session
         self.session = PromptSession()
-        self.message_queue = Queue()
-        self.message_lock = threading.Lock()
-        self.input_ready = threading.Event()
 
-        # Start a thread for handling incoming messages
+        # Start threads
         self.message_thread = threading.Thread(target=self.handle_response_loop, daemon=True)
         self.message_thread.start()
 
-        # Start a thread for handling user input
         self.input_thread = threading.Thread(target=self.process_user_input, daemon=True)
         self.input_thread.start()
 
@@ -40,7 +36,8 @@ class GameMenu:
             if self.player.request:
                 self.handle_response()
                 self.player.request = None  # Clear the request after handling
-            time.sleep(0.1)
+            else:
+                time.sleep(0.1)  # Slight delay to prevent busy waiting
 
     def handle_response(self):
         if self.player.request:
@@ -48,8 +45,7 @@ class GameMenu:
             message = ""
             if req_type == "welcome":
                 message = ServerMessage(**self.player.request).message
-                self.awaiting_name = True  # Set flag to prompt for name
-                self.input_ready.set()  # Signal input thread
+                self.awaiting_name = True  # Prompt for name
             elif req_type == "info":
                 message = ServerMessage(**self.player.request).message
             elif req_type == "join":
@@ -57,79 +53,71 @@ class GameMenu:
                 message = f"Player {join_msg.user} has joined the game."
             elif req_type == "game_started":
                 self.game_active = True
-                self.awaiting_ship_placement = True  # Set flag for ship placement
-                self.input_ready.set()  # Signal input thread
+                self.awaiting_ship_placement = True  # Prompt for ship placement
             elif req_type == "turn_switch":
                 turn_msg = TurnSwitchNotification(**self.player.request)
                 if turn_msg.user == self.player.name:
                     message = "It's your turn!\n"
                     self.my_turn = True
                 else:
-                    message = f"Waiting for {turn_msg.user} to make a move..."
+                    message = f"Waiting for {turn_msg.user} to make a move...\n"
                     self.my_turn = False
                 message += self.get_commands_text()
             elif req_type == "view":
                 view_msg = ViewResponse(**self.player.request)
                 message = f"Opponent's Board:\n{view_msg.opponent_board}\n"
                 message += f"Board for {view_msg.user}:\n{view_msg.my_board}"
+            elif req_type == "move":
+                move_msg = MoveResponse(**self.player.request)
+                hit_status = "Hit!" if move_msg.hit else "Miss."
+                user = "You" if move_msg.user == self.player.name else move_msg.user
+                message = f"{user} made a move at ({move_msg.row}, {move_msg.col}). {hit_status}"
             elif req_type == "error":
                 message = f"Error: {self.player.request.get('message')}"
 
+            self.player.request = None
+
             if message:
-                with self.message_lock:
-                    self.message_queue.put(message)
-                    self.input_ready.set()  # Signal input thread
+                print_formatted_text("\n" + message)
 
     def process_user_input(self):
         while not self.stop_threads:
-            self.input_ready.wait()
             with patch_stdout():
-                self.display_pending_messages()
-
                 if self.awaiting_name:
-                    self.player.name = self.session.prompt("Enter your player name: ")
+                    self.player.name = self.session.prompt("Enter your player name: ").strip()
                     self.player.send(SetNameRequest(user=self.player.name))
                     self.awaiting_name = False
-                    self.input_ready.clear()
                     continue
 
                 if self.awaiting_ship_placement:
                     self.start_ship_placement()
                     self.awaiting_ship_placement = False
-                    self.input_ready.clear()
                     continue
 
                 if not self.game_active:
-                    time.sleep(0.1)
-                    self.input_ready.clear()
                     continue
 
                 user_input = self.session.prompt("> ").strip().lower()
+                if user_input:
+                    self.process_command(user_input)
 
-                if user_input == "help":
-                    print(self.get_commands_text())
-                elif user_input.startswith("move"):
-                    if self.my_turn:
-                        self.handle_move(user_input)
-                    else:
-                        print("It's not your turn.")
-                elif user_input.startswith("chat"):
-                    self.handle_chat(user_input)
-                elif user_input == "view":
-                    self.view_board()
-                elif user_input == "quit":
-                    self.quit_game()
-                    break
-                else:
-                    print("Unknown command. Type 'help' for the list of available commands.")
-
-                self.input_ready.clear()
-
-    def display_pending_messages(self):
-        with self.message_lock:
-            while not self.message_queue.empty():
-                message = self.message_queue.get()
-                print("\n" + message)
+    def process_command(self, user_input):
+        if user_input == "help":
+            print(self.get_commands_text())
+        elif user_input.startswith("move"):
+            if self.my_turn:
+                self.handle_move(user_input)
+            else:
+                print("It's not your turn.")
+        elif user_input.startswith("chat"):
+            self.handle_chat(user_input)
+        elif user_input == "view":
+            self.view_board()
+        elif user_input == "quit":
+            self.quit_game()
+            self.stop_threads = True
+        else:
+            print("Unknown command. Type 'help' for the list of available commands.")
 
     def start_ship_placement(self):
         print("\nGame started! Place your ships.")
@@ -158,7 +146,6 @@ class GameMenu:
             print(f"Move sent: ({x}, {y})")
         except ValueError:
             print("Invalid move command. Use the format: move [x] [y]")
-        self.input_ready.set()
 
     def handle_chat(self, user_input):
         try:
@@ -167,7 +154,6 @@ class GameMenu:
             print(f"Chat sent: {message}")
         except ValueError:
             print("Invalid chat command. Use the format: chat [message]")
-        self.input_ready.set()
 
     def quit_game(self):
         self.player.send(QuitRequest(user=self.player.name))

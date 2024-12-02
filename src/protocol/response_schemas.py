@@ -39,6 +39,14 @@ class ViewResponse(BaseModel):
     opponent_board: str
 
 
+class MoveResponse(BaseModel):
+    type: str = 'move'
+    user: str
+    x: int
+    y: int
+    hit: bool
+
+
 class NameChangeResponse(BaseModel):
     type: str = 'set_name'
     user: str
@@ -53,3 +61,8 @@ class WelcomeMessage(BaseModel):
 class TurnSwitchNotification(BaseModel):
     type: str = 'turn_switch'
     user: str
+
+
+class GameOverNotification(BaseModel):
+    type: str = 'game_over'
+    winner: str

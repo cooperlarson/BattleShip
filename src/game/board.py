@@ -99,6 +99,7 @@ class Board:
 
     def mark_hit(self, row, col):
         self.grid[row][col] = 'X' if self.grid[row][col] == 'S' else 'O'
+        return self.grid[row][col] == 'X'
 
     def display(self):
         print("\n".join(" ".join(row) for row in self.grid))

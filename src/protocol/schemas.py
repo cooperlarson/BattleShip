@@ -32,8 +32,8 @@ class BoardRequest(Request):
 
 class MoveRequest(Request):
     type: str = 'move'
-    row: int
-    col: int
+    x: int
+    y: int
 
 
 class ViewRequest(Request):
