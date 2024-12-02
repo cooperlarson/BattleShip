@@ -2,10 +2,9 @@ import logging
 import time
 
 from src.game.board import Board
-from src.protocol.response_schemas import AckResponse, GameStartedNotification, ServerMessage, TurnSwitchNotification, \
-    ViewResponse, MoveResponse, GameOverNotification
+from src.protocol.response_schemas import *
+from src.protocol.schemas import BoardRequest, ViewRequest, MoveRequest, ChatMessage, QuitRequest
 from src.game.game import Game
-from src.protocol.schemas import BoardRequest, ViewRequest, MoveRequest, ChatMessage
 
 
 class GameSession:
@@ -80,9 +79,9 @@ class GameSession:
                 player.send(ServerMessage(message=f"{msg.user}: {msg.message}"))
 
     def handle_quit(self, msg):
+        msg = QuitRequest(**msg)
         logging.info(f"Player {msg.user} has quit the game.")
-        msg.enqueue_message(AckResponse(result="quit_success", user=msg.user))
-        self.notify_session({ "type": "quit", "user": msg.user })
+        self.notify_session(QuitNotification(user=msg.user))
 
     def notify_session(self, msg):
         for name, player in self.game.players.items():

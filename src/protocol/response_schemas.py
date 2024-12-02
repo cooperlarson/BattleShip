@@ -1,14 +1,4 @@
 from pydantic import BaseModel
-from typing import Optional
-
-from src.protocol.schemas import BoardType
-
-
-class AckResponse(BaseModel):
-    type: str = 'ack'
-    result: str
-    user: str
-    hit: Optional[bool] = None
 
 
 class ServerMessage(BaseModel):

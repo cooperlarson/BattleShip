@@ -21,10 +21,8 @@ class GameMenu:
         self.awaiting_ship_placement = False
         self.stop_threads = False
 
-        # Initialize prompt session
         self.session = PromptSession()
 
-        # Start threads
         self.message_thread = threading.Thread(target=self.handle_response_loop, daemon=True)
         self.message_thread.start()
 
@@ -35,9 +33,9 @@ class GameMenu:
         while not self.stop_threads:
             if self.player.request:
                 self.handle_response()
-                self.player.request = None  # Clear the request after handling
+                self.player.request = None
             else:
-                time.sleep(0.1)  # Slight delay to prevent busy waiting
+                time.sleep(0.1)
 
     def handle_response(self):
         if self.player.request:
@@ -48,9 +46,6 @@ class GameMenu:
                 self.awaiting_name = True  # Prompt for name
             elif req_type == "info":
                 message = ServerMessage(**self.player.request).message
-            elif req_type == "join":
-                join_msg = JoinNotification(**self.player.request)
-                message = f"Player {join_msg.user} has joined the game."
             elif req_type == "game_started":
                 self.game_active = True
                 self.awaiting_ship_placement = True  # Prompt for ship placement
@@ -72,6 +67,9 @@ class GameMenu:
                 message = f"{chat_msg.user}: {chat_msg.message}"
             elif req_type == "error":
                 message = f"Error: {self.player.request.get('message')}"
+            elif req_type == "quit":
+                message = f"Player {self.player.request.get('user')} has quit the game. You win!"
+                self.quit_game()
 
             self.player.request = None
 
