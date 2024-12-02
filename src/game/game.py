@@ -2,11 +2,14 @@ from random import Random
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, player1, player2):
         self.game_id = Random().randint(0, 1000000)
-        self.players = {}  # Maps player.name to player object
-        self.boards = {}  # Maps player.name to their Board object
-        self.turn = ''  # Keeps track of whose turn it is
+        self.players = {
+            player1.name: player1,
+            player2.name: player2
+        }
+        self.boards = {}
+        self.turn = player1.name
         self.winner = None
 
     def get_player(self, player_id):

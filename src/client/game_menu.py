@@ -62,16 +62,11 @@ class GameMenu:
                 else:
                     message = f"Waiting for {turn_msg.user} to make a move...\n"
                     self.my_turn = False
-                message += self.get_commands_text()
+                message += "\nType 'help' to see the list of available commands."
             elif req_type == "view":
                 view_msg = ViewResponse(**self.player.request)
                 message = f"Opponent's Board:\n{view_msg.opponent_board}\n"
                 message += f"Board for {view_msg.user}:\n{view_msg.my_board}"
-            elif req_type == "move":
-                move_msg = MoveResponse(**self.player.request)
-                hit_status = "Hit!" if move_msg.hit else "Miss."
-                user = "You" if move_msg.user == self.player.name else move_msg.user
-                message = f"{user} made a move at ({move_msg.row}, {move_msg.col}). {hit_status}"
             elif req_type == "error":
                 message = f"Error: {self.player.request.get('message')}"
 

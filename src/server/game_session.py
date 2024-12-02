@@ -10,10 +10,7 @@ from src.protocol.schemas import BoardRequest, ViewRequest, MoveRequest
 
 class GameSession:
     def __init__(self, player1, player2):
-        self.players = [player1.name, player2.name]
-        self.game = Game()
-        self.game.add_player(player1)
-        self.game.add_player(player2)
+        self.game = Game(player1, player2)
         msg = f"New game session started between {player1.name} and {player2.name}"
         logging.info(msg)
         self.notify_session(ServerMessage(message=msg))
@@ -39,8 +36,10 @@ class GameSession:
         for opp_name, opp_board in self.game.boards.items():
             if opp_name != player_name:
                 hit = opp_board.mark_hit(msg.x, msg.y)
-                print(f"Player {player_name} hit {opp_name} at ({msg.x}, {msg.y})")
-                self.notify_session(MoveResponse(user=player_name, x=msg.x, y=msg.y, hit=hit))
+                status = "Hit!" if hit else "Miss!"
+                response = f"{player_name} fired at ({msg.x}, {msg.y}). {status}"
+                print(response)
+                self.notify_session(ServerMessage(message=response))
 
         if self.game.check_winner():
             winner_name = self.game.winner
@@ -83,7 +82,6 @@ class GameSession:
         self.notify_session({ "type": "quit", "user": msg.user })
 
     def notify_session(self, msg):
-        for name in self.players:
-            player = self.game.players[name]
+        for name, player in self.game.players.items():
             player.send(msg)
-        time.sleep(0.1)
+        time.sleep(0.05)

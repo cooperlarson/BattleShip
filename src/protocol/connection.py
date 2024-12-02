@@ -81,10 +81,20 @@ class Connection:
         message_data = self.create_message(content)
         self._send_buffer += message_data
 
-        # Register for EVENT_WRITE only if there's data to send
         if self._send_buffer:
-            logging.debug(f"Registering EVENT_WRITE for {self.addr} with buffer size {len(self._send_buffer)}.")
-            self.selector.modify(self.sock, selectors.EVENT_WRITE | selectors.EVENT_READ, data=self)
+            try:
+                sent = self.sock.send(self._send_buffer)
+                self._send_buffer = self._send_buffer[sent:]  # Remove sent data
+                logging.debug(f"Sent {sent} bytes to {self.addr}")
+            except BrokenPipeError:
+                logging.error("Broken pipe; closing connection.")
+                self.close()
+            except Exception as e:
+                logging.error(f"Error sending data to {self.addr}: {e}")
+                self.close()
+
+        if not self._send_buffer:
+            self.selector.modify(self.sock, selectors.EVENT_READ, data=self)
 
     @staticmethod
     def create_message(content):
