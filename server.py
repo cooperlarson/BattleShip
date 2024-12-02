@@ -3,9 +3,10 @@ import selectors
 import logging
 import argparse
 
-from src.protocol.connection import Connection
-from src.protocol.response_schemas import WelcomeMessage, ServerMessage
-from src.server.game_session import GameSession
+from src.connection.connection import Connection
+from src.protocol.client_schemas import WelcomeMessage, ServerMessage
+from src.connection.game_session import GameSession
+from src.util.error_handler import ServerErrorHandler
 
 logging.basicConfig(level=logging.INFO)
 
@@ -21,10 +22,11 @@ class BattleshipServer:
         self.sock.setblocking(False)
         self.sel.register(self.sock, selectors.EVENT_READ, data=None)
 
-        self.clients = {}  # All connected clients
-        self.pending_clients = []  # Clients waiting to join a game
-        self.game_sessions = {}  # Active game sessions by client ID
+        self.clients = {}
+        self.pending_clients = []
+        self.game_sessions = {}
 
+    @ServerErrorHandler()
     def run(self):
         logging.info(f"Server running on {self.server_address}")
         try:

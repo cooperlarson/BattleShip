@@ -2,7 +2,7 @@ import json
 import random
 
 from src.game.ship import Carrier, Battleship, Cruiser, Submarine, Destroyer
-from src.protocol.schemas import ShipType, BoardType
+from src.protocol.server_schemas import ShipType, BoardType
 
 
 class Board:

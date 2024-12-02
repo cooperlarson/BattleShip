@@ -5,12 +5,9 @@ from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit import print_formatted_text
 
 from src.game.board import Board
-from src.protocol.response_schemas import (
-    JoinNotification, ServerMessage, ViewResponse, TurnSwitchNotification, MoveResponse
-)
-from src.protocol.schemas import (
-    MoveRequest, QuitRequest, ViewRequest, BoardRequest, SetNameRequest, BoardType, ChatMessage
-)
+from src.protocol.client_schemas import ServerMessage, ViewResponse, TurnSwitchNotification
+from src.protocol.server_schemas import MoveRequest, QuitRequest, ViewRequest, BoardRequest, SetNameRequest, ChatMessage
+
 
 class GameMenu:
     def __init__(self, connection):
@@ -43,12 +40,12 @@ class GameMenu:
             message = ""
             if req_type == "welcome":
                 message = ServerMessage(**self.player.request).message
-                self.awaiting_name = True  # Prompt for name
+                self.awaiting_name = True
             elif req_type == "info":
                 message = ServerMessage(**self.player.request).message
             elif req_type == "game_started":
                 self.game_active = True
-                self.awaiting_ship_placement = True  # Prompt for ship placement
+                self.awaiting_ship_placement = True
             elif req_type == "turn_switch":
                 turn_msg = TurnSwitchNotification(**self.player.request)
                 if turn_msg.user == self.player.name:

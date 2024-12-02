@@ -5,7 +5,7 @@ import struct
 
 from pydantic import BaseModel
 
-from src.protocol.response_schemas import NameChangeResponse
+from src.protocol.client_schemas import NameChangeResponse
 
 
 class Connection:
@@ -43,7 +43,6 @@ class Connection:
     def _write(self):
         if self._send_buffer:
             try:
-                # Send data from the buffer
                 sent = self.sock.send(self._send_buffer)
                 self._send_buffer = self._send_buffer[sent:]  # Trim sent data
             except BrokenPipeError:
@@ -51,7 +50,6 @@ class Connection:
                 self.close()
                 return
 
-            # If buffer is empty, switch back to EVENT_READ
             if not self._send_buffer:
                 logging.debug(f"Buffer empty for {self.addr}; switching to EVENT_READ.")
                 self.selector.modify(self.sock, selectors.EVENT_READ, data=self)
@@ -77,14 +75,13 @@ class Connection:
         elif not isinstance(content, bytes):
             raise TypeError("Content must be a Pydantic model, str, or bytes")
 
-        # Add content to the buffer
         message_data = self.create_message(content)
         self._send_buffer += message_data
 
         if self._send_buffer:
             try:
                 sent = self.sock.send(self._send_buffer)
-                self._send_buffer = self._send_buffer[sent:]  # Remove sent data
+                self._send_buffer = self._send_buffer[sent:]
                 logging.debug(f"Sent {sent} bytes to {self.addr}")
             except BrokenPipeError:
                 logging.error("Broken pipe; closing connection.")

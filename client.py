@@ -2,9 +2,9 @@ import selectors
 import socket
 import argparse
 import logging
+from src.connection.client_session import GameMenu
+from src.connection.connection import Connection
 from src.util.error_handler import ClientErrorHandler
-from src.client.game_menu import GameMenu
-from src.protocol.connection import Connection
 
 
 class BattleshipClient:
@@ -18,6 +18,7 @@ class BattleshipClient:
         self.sel.register(self.sock, selectors.EVENT_WRITE | selectors.EVENT_READ, data=self.connection)
         self.game_menu = GameMenu(self.connection)
 
+    @ClientErrorHandler()
     def run(self):
         logging.info(f"Client connecting to {self.server_address}")
         try:

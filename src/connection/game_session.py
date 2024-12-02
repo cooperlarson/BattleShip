@@ -2,8 +2,8 @@ import logging
 import time
 
 from src.game.board import Board
-from src.protocol.response_schemas import *
-from src.protocol.schemas import BoardRequest, ViewRequest, MoveRequest, ChatMessage, QuitRequest
+from src.protocol.client_schemas import *
+from src.protocol.server_schemas import BoardRequest, ViewRequest, MoveRequest, ChatMessage, QuitRequest
 from src.game.game import Game
 
 

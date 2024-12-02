@@ -29,12 +29,6 @@ class Game:
         """Checks if both players have submitted their boards."""
         return len(self.boards.items()) == 2
 
-    def add_player(self, player):
-        """Adds a player to the game."""
-        if not self.players:
-            self.turn = player.name  # First player added gets the first turn
-        self.players[player.name] = player
-
     def switch_turn(self):
         """Switches the turn to the other player."""
         for opponent_name in self.players:
