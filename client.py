@@ -29,8 +29,6 @@ class BattleshipClient:
                         self.game_menu.handle_response()
                     if mask & selectors.EVENT_WRITE:
                         self.connection.process_events(mask)
-
-                self.game_menu.process_user_input()
         except KeyboardInterrupt:
             logging.info("Client shutting down...")
         finally:

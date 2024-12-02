@@ -119,7 +119,7 @@ class BattleshipServer:
 
         if game_session:
             try:
-                game_session.handle_message(msg, client_id)
+                game_session.handle_message(msg)
             except Exception as e:
                 logging.error(f"Error handling message in game session: {e}")
         else:
