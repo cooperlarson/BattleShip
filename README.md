@@ -30,11 +30,11 @@ Python implementation of BattleShip for 2 players using sockets.
 # Sprint 4
 
 ## Deliverables:
-* **Winning Condition**: Implement the winning condition for the game ***Work in Progress***.
+* **Winning Condition**: Implement the winning condition for the game.
 * **Command Line Arguments**: Add command line arguments to the server and client for specifying the host and port.
-* **User Interface**: Expand the user interface to include more detailed information about the game state and player actions ***Work in Progress***.
+* **User Interface**: Expand the user interface to include more detailed information about the game state and player actions.
 
-## How to play (note this is in active dev):
+## How to play:
 
 ### Start the server:
 ```bash
