@@ -45,13 +45,11 @@ class Board:
                         continue
 
                 try:
-                    # Parse input and validate
                     row, col, direction = command.split()
                     row, col = int(row), int(col)
                     if direction not in ('h', 'v'):
                         raise ValueError("Direction must be 'H' or 'V'.")
 
-                    # Place the ship and show the board
                     if self.can_place_ship(row, col, ship.length, direction.upper()):
                         self.place_ship(row, col, ship.length, direction.upper())
                         self.display()
@@ -64,7 +62,7 @@ class Board:
 
     def randomize_ships(self):
         """Place all ships randomly on the board."""
-        max_attempts = 100  # Maximum number of attempts to place all ships
+        max_attempts = 100
         for ship in self.ships:
             placed = False
             attempts = 0
@@ -127,14 +125,10 @@ class Board:
         else:
             raise ValueError("Invalid data type for deserialization. Expected JSON string or dictionary.")
 
-        # Use Pydantic model to parse data
         board_data = BoardType(**data)
-
-        # Create Board instance and set attributes dynamically
         board = cls(size=board_data.size)
         board.grid = board_data.grid
 
-        # Map ship names to constructors
         ship_map = {
             "Carrier": Carrier,
             "Battleship": Battleship,
@@ -143,7 +137,6 @@ class Board:
             "Destroyer": Destroyer,
         }
 
-        # Instantiate ships using the mapping
         board.ships = [
             ship_map[ship.name](hits=ship.hits)
             for ship in board_data.ships
