@@ -34,16 +34,17 @@ class GameSession:
 
         for opp_name, opp_board in self.game.boards.items():
             if opp_name != player_name:
-                hit = opp_board.mark_hit(msg.x, msg.y)
+                hit, sunk, ship_name = opp_board.mark_hit(msg.x, msg.y)
                 status = "Hit!" if hit else "Miss!"
                 response = f"{player_name} fired at ({msg.x}, {msg.y}). {status}"
+                response += f" {ship_name} has been sunk!" if sunk else ""
                 print(response)
                 self.notify_session(ServerMessage(message=response))
 
         if self.game.check_winner():
-            winner_name = self.game.winner
-            logging.info(f"Player {winner_name} has won the game!")
-            self.notify_session(GameOverNotification(winner=winner_name))
+            self.game.winner = player_name
+            logging.info(f"Player {self.game.winner} has won the game!")
+            self.notify_session(GameOverNotification(winner=self.game.winner))
         else:
             self.game.switch_turn()
             self.notify_session(TurnSwitchNotification(user=self.game.turn))

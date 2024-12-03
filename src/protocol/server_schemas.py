@@ -14,6 +14,7 @@ class ShipType(BaseModel):
     name: str
     length: int
     hits: int
+    coordinates: list[tuple[int, int]]
 
 
 class BoardType(BaseModel):

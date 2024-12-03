@@ -39,10 +39,4 @@ class Game:
     def check_winner(self):
         """Checks if there is a winner."""
         for player_name, player_board in self.boards.items():
-            if not any('S' in row for row in player_board.grid):
-                # Find the opponent
-                self.winner = next(
-                    name for name in self.players if name != player_name
-                )
-                return True
-        return False
+            return not any('S' in row for row in player_board.grid)

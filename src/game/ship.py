@@ -3,6 +3,7 @@ class Ship:
         self.name = name
         self.length = length
         self.hits = hits
+        self.coordinates = []
 
     def is_sunk(self):
         return self.hits >= self.length

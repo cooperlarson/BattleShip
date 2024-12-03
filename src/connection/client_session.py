@@ -67,6 +67,9 @@ class GameMenu:
             elif req_type == "quit":
                 message = f"Player {self.player.request.get('user')} has quit the game. You win!"
                 self.quit_game()
+            elif req_type == "game_over":
+                message = f"Game over! Player {self.player.request.get('winner')} has won!"
+                self.quit_game()
 
             self.player.request = None
 
@@ -152,3 +155,4 @@ class GameMenu:
         self.player.send(QuitRequest(user=self.player.name))
         self.stop_threads = True
         print("Quitting the game...")
+        self.player.close()
