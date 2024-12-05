@@ -34,6 +34,17 @@ Python implementation of BattleShip for 2 players using sockets.
 * **Command Line Arguments**: Add command line arguments to the server and client for specifying the host and port.
 * **User Interface**: Expand the user interface to include more detailed information about the game state and player actions.
 
+# Sprint 5
+
+## Deliverables:
+* **Error Handling**: Improved error handling and error messages for better user experience. Balanced use of decorators and try-except blocks.
+* **Integration Testing**: Conducted integration testing to ensure the server and client work together as expected.
+* **Security / Risk Evaluation**:
+  * **Man-in-the-Middle Attack**: This game does not have the requisite handshake protocols safeguard against MITM attacks. This can be addressed by implementing a secure certificate based handshake protocol.
+  * **Source Spoofing**: The game does not have any source spoofing protection. This can be addressed by implementing a secure handshake protocol.
+  * **Denial of Service (DoS) Attack**: The game is vulnerable to DoS attacks. This can be addressed by implementing rate limiting and connection throttling.
+  * **Code Injection**: The game is vulnerable to code injection attacks. This can be addressed by validating user input and using secure serialization methods.
+
 ## How to play:
 
 ### Start the server:
