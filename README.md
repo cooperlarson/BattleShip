@@ -3,6 +3,18 @@ Python implementation of BattleShip for 2 players using sockets.
 
 <img src="https://t3.ftcdn.net/jpg/05/92/31/70/360_F_592317043_rOOpTliZqnmqLi3YwWxGIgVyyfk5nMaM.jpg" width=100% />
 
+## How to play:
+
+### Start the server:
+```bash
+python3 server.py
+```
+
+### Connect clients:
+```bash
+python3 client.py
+```
+
 # Sprint 1
 
 ## Deliverables:
@@ -45,17 +57,14 @@ Python implementation of BattleShip for 2 players using sockets.
   * **Denial of Service (DoS) Attack**: The game is vulnerable to DoS attacks. This can be addressed by implementing rate limiting and connection throttling.
   * **Code Injection**: The game is vulnerable to code injection attacks. This can be addressed by validating user input and using secure serialization methods.
 
-## How to play:
-
-### Start the server:
-```bash
-python3 server.py
-```
-
-### Connect clients:
-```bash
-python3 client.py
-```
+# Retrospective:
+* **What went well?**:
+  * Successfully implemented the core functionality of the game.
+  * Developed a robust communication protocol for client-server interactions.
+* **What could have gone better?**:
+  * A GUI could have been implemented to enhance the user experience.
+  * More comprehensive error handling, testing, and logging could have been implemented.
+  * Additional features such as rematch or re-enter match queue could have been added.
 
 ### Play the game:
 * Each player positions their battleships using the command line.
