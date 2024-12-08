@@ -69,19 +69,20 @@ python3 client.py
 
   
 # Project Roadmap
-##### I could foresee further development of this project in the following directions:
+### I could foresee further development of this project in the following directions:
 * **GUI Implementation**: Develop a graphical user interface for the game to enhance the user experience.
 * **Refine Existing Features**: Improve the existing features and functionalities of the game, such as adding a rematch option or re-entering the match queue.
 * **Add More Game Modes**: Implement additional game modes, such as a single-player mode against AI or a tournament mode.
 * **Enhance Security**: Improve the security of the game by implementing secure communication protocols and input validation.
-* **Potential ML Tournament**: Organize a machine learning tournament where AI agents play against each other in the game of Battleship, with boards of 1000x1000 or larger and fleets of 15-20 ships with variant munition calibers.
+* **Potential ML Tournament**: Organize a machine learning tournament where AI agents play against each other in the game of Battleship, with boards of 1000x1000 or larger and fleets of 15-20 ships with variant caliber munitions.
 
 # Retrospective:
-* **What went well?**:
+
+### What went well?
   * Successfully implemented the core functionality of the game.
   * Developed a robust communication protocol for client-server interactions.
   * Learned a lot about socket programming and message serialization.
-* **What could have gone better?**:
+### What could have gone better?
   * A GUI could have been implemented to enhance the user experience.
   * More comprehensive error handling, testing, and logging could have been implemented.
   * Additional features such as rematch or re-enter match queue could have been added.
