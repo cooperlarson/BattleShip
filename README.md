@@ -15,6 +15,16 @@ python3 server.py
 python3 client.py
 ```
 
+### Play the game:
+* Each player positions their battleships using the command line.
+* The game starts.
+* Players take turns targeting chosen coordinates, attempting to sink each others ships.
+* The first player to eliminate all their opponents ships wins the game!
+
+## Technologies Used:
+* Python
+* Sockets
+
 # Sprint 1
 
 ## Deliverables:
@@ -57,24 +67,26 @@ python3 client.py
   * **Denial of Service (DoS) Attack**: The game is vulnerable to DoS attacks. This can be addressed by implementing rate limiting and connection throttling.
   * **Code Injection**: The game is vulnerable to code injection attacks. This can be addressed by validating user input and using secure serialization methods.
 
+  
+# Project Roadmap
+##### I could foresee further development of this project in the following directions:
+* **GUI Implementation**: Develop a graphical user interface for the game to enhance the user experience.
+* **Refine Existing Features**: Improve the existing features and functionalities of the game, such as adding a rematch option or re-entering the match queue.
+* **Add More Game Modes**: Implement additional game modes, such as a single-player mode against AI or a tournament mode.
+* **Enhance Security**: Improve the security of the game by implementing secure communication protocols and input validation.
+* **Potential ML Tournament**: Organize a machine learning tournament where AI agents play against each other in the game of Battleship, with boards of 1000x1000 or larger and fleets of 15-20 ships with variant munition calibers.
+
 # Retrospective:
 * **What went well?**:
   * Successfully implemented the core functionality of the game.
   * Developed a robust communication protocol for client-server interactions.
+  * Learned a lot about socket programming and message serialization.
 * **What could have gone better?**:
   * A GUI could have been implemented to enhance the user experience.
   * More comprehensive error handling, testing, and logging could have been implemented.
   * Additional features such as rematch or re-enter match queue could have been added.
 
-### Play the game:
-* Each player positions their battleships using the command line.
-* The game starts.
-* Players take turns targeting chosen coordinates, attempting to sink each others ships.
-* The first player to eliminate all their opponents ships wins the game!
-
-## Technologies Used:
-* Python
-* Sockets
+###
 
 ## Additional Resources:
 * [Getting started with Python](https://www.python.org/about/gettingstarted/)
