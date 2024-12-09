@@ -26,7 +26,6 @@ class BattleshipServer:
         self.pending_clients = []
         self.game_sessions = {}
 
-    @ServerErrorHandler()
     def run(self):
         logging.info(f"Server running on {self.server_address}")
         try:

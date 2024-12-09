@@ -18,7 +18,6 @@ class BattleshipClient:
         self.sel.register(self.sock, selectors.EVENT_WRITE | selectors.EVENT_READ, data=self.connection)
         self.game_menu = GameMenu(self.connection)
 
-    @ClientErrorHandler()
     def run(self):
         logging.info(f"Client connecting to {self.server_address}")
         try:
@@ -44,7 +43,7 @@ class BattleshipClient:
 def parse_args():
     parser = argparse.ArgumentParser(description='Start the Battleship client.')
     parser.add_argument('-i', type=str, default='localhost', help='IP/DNS address of the server')
-    parser.add_argument('-p', type=int, default=29999, help='Port number to run the client on')
+    parser.add_argument('-p', type=int, default=29999, help='Port number of the server to connect to (default: 29999)')
     return parser.parse_args()
 
 

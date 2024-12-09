@@ -3,20 +3,64 @@ Python implementation of BattleShip for 2 players using sockets.
 
 <img src="https://t3.ftcdn.net/jpg/05/92/31/70/360_F_592317043_rOOpTliZqnmqLi3YwWxGIgVyyfk5nMaM.jpg" width=100% />
 
-## How to play:
+# How to play:
 
-### Start the server:
+## Ensure you are using Python 3.10 or later.
 ```bash
-python3 server.py
+python3 --version
 ```
 
-### Connect clients:
+## On the school systems, Python 3.10 can be loaded with the following command:
 ```bash
-python3 client.py
+module load python/anaconda
+```
+
+## Install the required packages:
+```bash
+pip install -r requirements.txt
+```
+
+## Start the server:
+```bash
+python3 server.py  # Default port is 29999, default host is localhost
+
+# To specify a port:
+python3 server.py -p 30000  # Port 30000
+
+# To specify a host:
+python3 server.py -i 0.0.0.0  # Host
+```
+
+## Connect clients:
+##### Client port argument must match the server port argument. Clients are dynamically assigned a port by the server.
+```bash
+python3 client.py  # Default port is 29999
+
+# To specify a port:
+python3 client.py -p 30000  # Port 30000
+```
+
+## Enter your name when prompted:
+`Welcome to Battleship! Please enter your name:`
+
+## The game will begin once both players have connected.
+`Position your ships!`
+
+## Commands:
+```bash
+Available Commands:
+  move [x] [y] - Make a move at the specified coordinates (e.g., move 3 5)
+  chat [message] - Send a chat message to your opponent
+  view - View the current state of the game board
+  quit - Quit the current game
+
 ```
 
 ### Play the game:
 * Each player positions their battleships using the command line.
+  * Position with coordinates (row, column) and orientation (horizontal or vertical).
+  * Position randomly by typing `random`.
+  * Position for demo by typing `demo`. This will advance the board to a late game three-hits to win scenario.
 * The game starts.
 * Players take turns targeting chosen coordinates, attempting to sink each others ships.
 * The first player to eliminate all their opponents ships wins the game!
